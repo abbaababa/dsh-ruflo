@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify plugin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund --ignore-scripts
+
+      - name: Syntax check
+        run: |
+          for file in client.js lib/*.js scripts/*.js; do
+            echo "node --check $file"
+            node --check "$file"
+          done
+
+      - name: Security and portability checks
+        run: node scripts/check-security.mjs
+
+      - name: Package dry run
+        run: npm pack --dry-run
