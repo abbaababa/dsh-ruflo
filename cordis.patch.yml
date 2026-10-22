@@ -1,0 +1,57 @@
+# dsh-ruflo bundle patch（dsh.bundle.patch 指向本文件）
+#
+# 两行、各司其职：
+#   1. dsh-ruflo-mcp —— 官方 Ruflo MCP 服务（整套 mcp__ruflo__* 工具）
+#   2. dsh-ruflo     —— 本插件的 Host 半身：ruflo_status / ruflo_cli / /ruflo
+#                       命令、系统提示词与全局 ruflo 技能
+#
+# 启动器优先使用本机 tools/ruflo-official 内的官方 3.59.7；缺失时回退 npx 固定版本。
+# 改版本后需重载 MCP 行或重启 dsh；不要同时启用旧的 mcp-ruflo 行。
+- insert:
+    - id: dsh-ruflo-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: ruflo
+        transport: stdio
+        command: node
+        args:
+          - !!js process.env.DSH_RUFLO_LAUNCHER || `${process.env.DSH_PROFILE_DIR || (process.env.HOME + '/.dsh/profiles/web')}/node_modules/dsh-ruflo/scripts/ruflo-mcp-launcher.mjs`
+          - "mcp"
+          - "start"
+        env:
+          HOME: !!js (process.env.DSH_PROFILE_DIR || (process.env.HOME + '/.dsh/profiles/web')) + '/home'
+          CLAUDE_FLOW_CWD: !!js (process.env.DSH_WORKSPACE || process.cwd())
+          CLAUDE_FLOW_MODE: "v3"
+          CLAUDE_FLOW_HOOKS_ENABLED: "true"
+          CLAUDE_FLOW_TOPOLOGY: "hierarchical-mesh"
+          CLAUDE_FLOW_MAX_AGENTS: "15"
+          CLAUDE_FLOW_MEMORY_BACKEND: "hybrid"
+          npm_config_update_notifier: "false"
+          XDG_CONFIG_HOME: !!js (process.env.DSH_PROFILE_DIR || (process.env.HOME + '/.dsh/profiles/web')) + '/config'
+          npm_config_cache: !!js (process.env.DSH_PROFILE_DIR || (process.env.HOME + '/.dsh/profiles/web')) + '/cache/npm-ruflo'
+          npm_config_logs_dir: !!js (process.env.DSH_PROFILE_DIR || (process.env.HOME + '/.dsh/profiles/web')) + '/cache/npm-ruflo/_logs'
+          ANTHROPIC_API_KEY: !!js (process.env.ANTHROPIC_API_KEY || '')
+          OPENAI_API_KEY: !!js (process.env.OPENAI_API_KEY || '')
+          GOOGLE_API_KEY: !!js (process.env.GOOGLE_API_KEY || '')
+          GEMINI_API_KEY: !!js (process.env.GEMINI_API_KEY || '')
+          GITHUB_TOKEN: !!js (process.env.GITHUB_TOKEN || '')
+          GH_TOKEN: !!js (process.env.GH_TOKEN || '')
+          HF_TOKEN: !!js (process.env.HF_TOKEN || '')
+          HUGGINGFACE_API_KEY: !!js (process.env.HUGGINGFACE_API_KEY || '')
+          OPENROUTER_API_KEY: !!js (process.env.OPENROUTER_API_KEY || '')
+          OLLAMA_HOST: !!js (process.env.OLLAMA_HOST || '')
+          OLLAMA_API_KEY: !!js (process.env.OLLAMA_API_KEY || '')
+        cwd: !!js (process.env.DSH_WORKSPACE || process.cwd())
+        # Ruflo 的 agent_execute / workflow 等工具可能长时间运行，给足超时。
+        toolCallTimeoutMs: 300000
+        # 即使 npx 首次下载失败也不阻断 Harness 启动；随后用 ruflo_status 诊断。
+        failOnStartupError: false
+        reconnect:
+          enabled: true
+          initialDelayMs: 500
+          maxDelayMs: 30000
+          maxAttempts: 10
+
+    - id: dsh-ruflo-plugin
+      name: './lib/host-1.2.3.js'
+      config: {}

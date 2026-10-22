@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Ruflo 多智能体编排",
+    "description": "把官方 Ruflo（ruvnet/ruflo）接入 DeepSeek Harness：全套 MCP 工具、完整 ruflo CLI、全局技能与实时状态检查，一次安装、所有会话可用。"
+  }
+}

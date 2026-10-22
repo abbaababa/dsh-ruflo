@@ -1,0 +1,58 @@
+{
+  "name": "dsh-ruflo",
+  "version": "1.2.3",
+  "description": "官方 Ruflo（ruvnet/ruflo）多智能体编排接入 DeepSeek Harness：全套 MCP 工具、完整 ruflo CLI、全局技能、状态页与安全扫描，一次安装、所有会话可用。",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "ruflo",
+    "claude-flow",
+    "mcp",
+    "multi-agent",
+    "swarm",
+    "orchestration"
+  ],
+  "type": "module",
+  "main": "lib/host-1.2.3.js",
+  "exports": {
+    ".": "./lib/host-1.2.3.js",
+    "./entry": "./lib/host-1.2.3.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "client.js",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+    "scripts/ruflo-mcp-launcher.mjs",
+    "scripts/fix-ruflo-runtime.mjs",
+    "scripts/check-security.mjs"
+  ],
+  "dependencies": {
+    "@deepseek-ai/schemastery": ">=3.18.1 <4.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "node scripts/check-security.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}

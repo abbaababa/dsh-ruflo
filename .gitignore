@@ -1,0 +1,9 @@
+node_modules/
+archive/
+*.tgz
+.DS_Store
+npm-debug.log*
+
+# Local-only diagnostics (machine-specific paths)
+scripts/mcp-probe.mjs
+scripts/ruvllm-mcp-probe.mjs
