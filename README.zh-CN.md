@@ -157,7 +157,18 @@ Linux 与 Windows 预期可用（实现是纯 Node.js，不依赖平台 shell）
 
 ### 6.2 从 npm 安装（推荐）
 
-在 DSH 会话里对助手说：
+插件已发布到 npm：[`dsh-ruflo`](https://www.npmjs.com/package/dsh-ruflo)。DSH 会**从该 registry 安装**这个 bundle；不需要提前全局安装 Ruflo，单纯执行 `npm install -g dsh-ruflo` 只会下载文件，不会把 bundle 注册进 DSH。
+
+先确认 npm 上的版本与 tarball：
+
+```bash
+npm view dsh-ruflo version
+# 1.2.3
+npm view dsh-ruflo dist.tarball
+# https://registry.npmjs.org/dsh-ruflo/-/dsh-ruflo-1.2.3.tgz
+```
+
+然后在 DSH 会话里对助手说：
 
 > 用 `plugin_manager` 安装 DSH bundle `dsh-ruflo@1.2.3`。
 

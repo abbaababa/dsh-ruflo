@@ -155,7 +155,18 @@ The status page requires a **Web** profile. The tools, CLI and slash command wor
 
 ### 6.2 From npm (recommended)
 
-In a DSH session, ask the agent:
+The plugin is published on npm as [`dsh-ruflo`](https://www.npmjs.com/package/dsh-ruflo). DSH installs the bundle **from that registry**; you do not need a global Ruflo install, and a bare `npm install -g dsh-ruflo` only downloads files without activating the bundle.
+
+Check the published version and tarball:
+
+```bash
+npm view dsh-ruflo version
+# 1.2.3
+npm view dsh-ruflo dist.tarball
+# https://registry.npmjs.org/dsh-ruflo/-/dsh-ruflo-1.2.3.tgz
+```
+
+Then install it into DSH. In a DSH session, ask the agent:
 
 > Install the DSH bundle `dsh-ruflo@1.2.3` with `plugin_manager`.
 
