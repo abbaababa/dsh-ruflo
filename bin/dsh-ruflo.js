@@ -4,8 +4,9 @@
  *
  * Installs this package into a DeepSeek Harness profile through the official
  * `dsh plugin` command, then selects the bundle in the profile manifest.
- * A running DSH watches that manifest (HMR) and loads the bundle without a
- * restart; when HMR is disabled the next DSH start loads it.
+ * A running DSH may load the bundle through its profile watcher (HMR); if
+ * `ruflo_status` reports reloadRequired, restart DSH once or toggle the row.
+ * A registry that lags behind npmjs is retried once against registry.npmjs.org.
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -18,18 +19,21 @@ const SELF = JSON.parse(readFileSync(new URL('../package.json', import.meta.url)
 const HELP = `dsh-ruflo ${SELF.version} — install the official Ruflo bridge into DeepSeek Harness.
 
 Usage:
-  npx ${NAME}@${SELF.version} install [--profile <name>] [--dry-run]
+  npx ${NAME}@${SELF.version} install [--profile <name>] [--registry <url>] [--dry-run]
   npx ${NAME}@${SELF.version} --version
   npx ${NAME}@${SELF.version} --help
 
 install:
   1. runs \`dsh plugin --profile <name> add ${NAME}@${SELF.version}\`;
   2. adds "${NAME}" to dsh.profile.bundles in the profile package.json;
-  3. leaves loading to DSH: its HMR watcher picks the change up while DSH is
-     running, otherwise the next DSH start loads it.
+  3. leaves loading to DSH: its watcher may hot-load the bundle, and if
+     ruflo_status reports reloadRequired, restart DSH once or toggle the row.
 
 Options:
   --profile <name>  DSH profile to install into (default: $DSH_PROFILE or "web").
+  --registry <url>  Registry for this install (default: your pnpm registry).
+                    If that registry has not synced this version yet, the
+                    installer retries once against https://registry.npmjs.org/.
   --dry-run         Print the exact steps without changing anything.
   --help            Show this help.
   --version         Print the version.
@@ -49,6 +53,7 @@ function parse(argv) {
   const options = {
     command: 'help',
     profile: process.env.DSH_PROFILE || 'web',
+    registry: undefined,
     dryRun: false,
   };
   let start = 0;
@@ -67,6 +72,17 @@ function parse(argv) {
       const value = argument.slice('--profile='.length);
       if (value === '') fail('--profile needs a profile name');
       options.profile = value;
+    } else if (argument === '--registry') {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('-') || !/^https?:\/\//.test(value)) {
+        fail('--registry needs an http(s) URL');
+      }
+      options.registry = value;
+      index += 1;
+    } else if (argument.startsWith('--registry=')) {
+      const value = argument.slice('--registry='.length);
+      if (!/^https?:\/\//.test(value)) fail('--registry needs an http(s) URL');
+      options.registry = value;
     } else if (argument === '--dry-run') {
       options.dryRun = true;
     } else if (argument === '--help' || argument === '-h') {
@@ -143,6 +159,25 @@ function registerBundle(directory, profile) {
   console.log(`Selected "${NAME}" in dsh.profile.bundles (backup: ${backup}).`);
 }
 
+const OFFICIAL_REGISTRY = 'https://registry.npmjs.org/';
+
+function pluginArgs(options, spec, registry) {
+  const args = ['plugin', '--profile', options.profile, 'add', spec];
+  if (registry !== undefined) args.push(`--config.registry=${registry}`);
+  return args;
+}
+
+function runPlugin(dsh, args, directory) {
+  const result = spawnSync(dsh, args, {
+    cwd: directory,
+    encoding: 'utf8',
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  return result;
+}
+
 function install(options) {
   const directory = profileDirectory(options.profile);
   const manifest = readManifest(directory, options.profile);
@@ -151,22 +186,32 @@ function install(options) {
   }
   const dsh = resolveDsh();
   const spec = `${NAME}@${SELF.version}`;
-  const command = `${dsh} plugin --profile ${options.profile} add ${spec}`;
+  const args = pluginArgs(options, spec, options.registry);
+  const command = `${dsh} ${args.join(' ')}`;
 
   if (options.dryRun) {
     console.log(`profile: ${directory}`);
     console.log(`step 1: ${command}`);
     console.log(`step 2: add "${NAME}" to dsh.profile.bundles in ${join(directory, 'package.json')}`);
-    console.log('step 3: DSH HMR loads it (or the next DSH start does)');
+    console.log('step 3: DSH may hot-load it; if ruflo_status reports reloadRequired, restart DSH once');
     return;
   }
 
   console.log(`Installing ${spec} into DSH profile "${options.profile}"...`);
-  const result = spawnSync(dsh, ['plugin', '--profile', options.profile, 'add', spec], {
-    cwd: directory,
-    stdio: 'inherit',
-  });
+  let result = runPlugin(dsh, args, directory);
   if (result.error) fail(`cannot run "${dsh}": ${result.error.message}`);
+  let output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+  if (
+    result.status !== 0 &&
+    /NO_MATCHING_VERSION|No matching version found/i.test(output) &&
+    options.registry !== OFFICIAL_REGISTRY
+  ) {
+    console.log('');
+    console.log(`The configured registry has not synced ${spec} yet; retrying with ${OFFICIAL_REGISTRY}`);
+    result = runPlugin(dsh, pluginArgs(options, spec, OFFICIAL_REGISTRY), directory);
+    if (result.error) fail(`cannot run "${dsh}": ${result.error.message}`);
+    output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+  }
   if (result.status !== 0) {
     fail(`"${command}" exited with ${result.status}; nothing was selected.`, result.status ?? 1);
   }
@@ -184,9 +229,8 @@ function install(options) {
 
   console.log('');
   console.log(`✔ ${NAME}@${SELF.version} is installed in profile "${options.profile}".`);
-  console.log('DSH loads it through its profile watcher; allow a few seconds.');
   console.log('Verify inside DSH: call ruflo_status, or open the Ruflo status panel.');
-  console.log('If this DSH instance runs without HMR, restart it once.');
+  console.log('If ruflo_status reports reloadRequired, restart DSH once (or toggle the dsh-ruflo-plugin row).');
 }
 
 const options = parse(process.argv.slice(2));
