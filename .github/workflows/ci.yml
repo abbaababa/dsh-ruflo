@@ -27,7 +27,7 @@ jobs:
 
       - name: Syntax check
         run: |
-          for file in client.js lib/*.js scripts/*.js; do
+          for file in client.js lib/*.js scripts/*.mjs; do
             echo "node --check $file"
             node --check "$file"
           done
