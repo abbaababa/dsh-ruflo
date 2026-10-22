@@ -11,6 +11,14 @@ English | [简体中文](README.zh-CN.md)
 
 > **What “replaces” means here.** dsh-ruflo is **not** a fork and **not** a reimplementation. It runs the official Ruflo runtime (pinned to `3.59.7`) inside DSH and exposes every official surface: MCP tools, CLI, agents, swarms, memory, hooks, workflows, security and federation. What it replaces is the **manual integration path** — installing Ruflo yourself, hand-writing an MCP server entry, keeping versions in sync, and building your own diagnostics. The upstream project stays the upstream project.
 
+> [!TIP]
+> **Install in one step**
+>
+> **One command** — paste this into any DSH chat (not a shell):
+> `plugin_manager install_bundle dsh-ruflo@1.2.3`
+>
+> **One click** — in the DSH Web GUI, open **Plugins** in the sidebar, click **Install a third-party plugin**, enter `dsh-ruflo@1.2.3`, then click **Install**.
+
 ---
 
 ## Contents
@@ -160,7 +168,7 @@ The agent calls:
 }
 ```
 
-If your DSH build exposes an external-bundle install box in **Plugins**, enter the same target there; otherwise ask the agent to call `plugin_manager`.
+Or install from the Web GUI: open **Plugins** in the sidebar, click **Install a third-party plugin**, enter `dsh-ruflo@1.2.3`, and click **Install**. Both paths call the same official installer.
 
 Read the result carefully:
 
