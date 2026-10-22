@@ -16,10 +16,14 @@
 > [!TIP]
 > **一步安装**
 >
-> **一条命令** —— 在任意 DSH 会话中发送（不是在终端里）：
-> `plugin_manager install_bundle dsh-ruflo@1.2.3`
+> **一条命令（npm）** —— 在任意终端执行：
+> `npx dsh-ruflo@1.2.4 install`
+> 自动装进 `web` profile、登记 bundle，并让 DSH 加载；换 profile 加 `--profile <名称>`。
 >
-> **一键安装** —— 打开 DSH Web 界面，点左侧 **插件**，点 **安装第三方插件**，填入 `dsh-ruflo@1.2.3`，点 **安装**。
+> **在 DSH 内** —— 在任意会话中发送：
+> `plugin_manager install_bundle dsh-ruflo@1.2.4`
+>
+> **一键安装** —— 打开 DSH Web 界面，点左侧 **插件**，点 **安装第三方插件**，填入 `dsh-ruflo@1.2.4`，点 **安装**。
 
 ---
 
@@ -116,7 +120,7 @@
 │      │             └─ 官方 ruflo 3.59.7 的 `mcp start`                  │
 │      │                                                                  │
 │      └── dsh-ruflo-plugin                                               │
-│            lib/host-1.2.3.js                                            │
+│            lib/host-1.2.4.js                                            │
 │              ├─ CLI 运行器（argv 数组、超时、输出上限）                  │
 │              ├─ 原生工具（agent / workflow / guard / model / claims）    │
 │              └─ GET /dsh-ruflo/status  ──▶  侧栏状态页                   │
@@ -138,7 +142,7 @@ patch 只插两行，各司其职：
 | Node.js | `v26.9.0`（要求 `>=22`） |
 | 官方 Ruflo | `3.59.7` |
 | 操作系统 | macOS（开发机） |
-| npm 包 | `dsh-ruflo@1.2.3` |
+| npm 包 | `dsh-ruflo@1.2.4` |
 
 Linux 与 Windows 预期可用（实现是纯 Node.js，不依赖平台 shell），但**尚未实测**。如果你在这些平台运行，欢迎提交 issue，附上 `ruflo_status` 输出与状态页结果。
 
@@ -159,29 +163,39 @@ Linux 与 Windows 预期可用（实现是纯 Node.js，不依赖平台 shell）
 
 插件已发布到 npm：[`dsh-ruflo`](https://www.npmjs.com/package/dsh-ruflo)。DSH 会**从该 registry 安装**这个 bundle；不需要提前全局安装 Ruflo，单纯执行 `npm install -g dsh-ruflo` 只会下载文件，不会把 bundle 注册进 DSH。
 
-先确认 npm 上的版本与 tarball：
+**npm 一条命令** —— 在任意终端执行：
 
 ```bash
-npm view dsh-ruflo version
-# 1.2.3
-npm view dsh-ruflo dist.tarball
-# https://registry.npmjs.org/dsh-ruflo/-/dsh-ruflo-1.2.3.tgz
+npx dsh-ruflo@1.2.4 install
 ```
 
-然后在 DSH 会话里对助手说：
+它会装进默认的 `web` profile，把 `dsh-ruflo` 加进 `dsh.profile.bundles`，并让 DSH 加载。换 profile 用 `--profile <名称>`；`--dry-run` 只打印步骤、不改任何文件。
 
-> 用 `plugin_manager` 安装 DSH bundle `dsh-ruflo@1.2.3`。
+原理：`dsh plugin` 通过 profile 的包管理器装包，安装器再把 bundle 选中；运行中的 DSH 会监听 profile 清单并自动重组（HMR）。如果该 DSH 实例没开 HMR，重启一次即可。
+
+在 DSH 里，官方安装器等价。对助手说：
+
+> 用 `plugin_manager` 安装 DSH bundle `dsh-ruflo@1.2.4`。
 
 助手实际执行：
 
 ```json
 {
   "action": "install_bundle",
-  "target": "dsh-ruflo@1.2.3"
+  "target": "dsh-ruflo@1.2.4"
 }
 ```
 
-也可以在 Web 界面安装：点左侧 **插件**，点 **安装第三方插件**，填入 `dsh-ruflo@1.2.3`，点 **安装**。两条路径调用的是同一个官方安装器。
+也可以在 Web 界面安装：点左侧 **插件**，点 **安装第三方插件**，填入 `dsh-ruflo@1.2.4`，点 **安装**。三种方式最终都走同一个官方安装器。
+
+先确认 npm 上的版本与 tarball：
+
+```bash
+npm view dsh-ruflo version
+# 1.2.4
+npm view dsh-ruflo dist.tarball
+# https://registry.npmjs.org/dsh-ruflo/-/dsh-ruflo-1.2.4.tgz
+```
 
 安装结果要这样读：
 
@@ -194,8 +208,8 @@ npm view dsh-ruflo dist.tarball
 在有 npm 网络的机器上：
 
 ```bash
-npm pack dsh-ruflo@1.2.3
-# 生成 dsh-ruflo-1.2.3.tgz
+npm pack dsh-ruflo@1.2.4
+# 生成 dsh-ruflo-1.2.4.tgz
 ```
 
 把 tgz 拷到离线机器，用绝对路径安装：
@@ -203,7 +217,7 @@ npm pack dsh-ruflo@1.2.3
 ```json
 {
   "action": "install_bundle",
-  "target": "/绝对路径/dsh-ruflo-1.2.3.tgz"
+  "target": "/绝对路径/dsh-ruflo-1.2.4.tgz"
 }
 ```
 
@@ -224,14 +238,14 @@ npm install --omit=dev      # 安装 @deepseek-ai/schemastery
 }
 ```
 
-每次改源码都要**同时换版本号和 host 文件名**；Node 按文件 URL 缓存模块，继续用 `lib/host-1.2.3.js` 这个名字，运行中的进程会一直执行旧代码。
+每次改源码都要**同时换版本号和 host 文件名**；Node 按文件 URL 缓存模块，继续用 `lib/host-1.2.4.js` 这个名字，运行中的进程会一直执行旧代码。
 
 ### 6.5 首次启动与验收
 
-1. 重启 DSH Web 进程（先停，再用你平时的命令启动，例如 `dsh web`）。
+1. 如果 DSH 本来就在运行且启用了 HMR，bundle 会热加载；否则用你平时的命令重启一次 DSH Web，例如 `dsh web`。
 2. 打开 DSH Web。首次 MCP 启动要下载官方运行时，冷缓存请等 **1–3 分钟**。
 3. 看左侧栏 **「Ruflo 状态」**：
-   - 插件版本 `1.2.3`；
+   - 插件版本 `1.2.4`；
    - CLI 版本 `ruflo v3.59.7`；
    - MCP 已连接，工具数大于 0；
    - 工具家族列表正常显示。
@@ -246,13 +260,19 @@ ruflo_cli {"args": ["--version"]}
 预期输出：
 
 ```text
-Ruflo 状态（插件 dsh-ruflo v1.2.3）
+Ruflo 状态（插件 dsh-ruflo v1.2.4）
 - CLI：npx -y ruflo@3.59.7
 - 版本：ruflo v3.59.7
 - MCP：ruflo 已连接，注册了 N 个 mcp__ruflo__* 工具
 ```
 
 ### 6.6 升级
+
+```bash
+npx dsh-ruflo@latest install
+```
+
+同一条 npm 命令即可升级。DSH 内等价写法：
 
 ```json
 {
@@ -261,7 +281,7 @@ Ruflo 状态（插件 dsh-ruflo v1.2.3）
 }
 ```
 
-然后重启 DSH。如果 `ruflo_status` 返回 `reloadRequired: true`，说明磁盘上已是新版本、运行进程还是旧代码——重启（或在插件页把 `dsh-ruflo-plugin` 行关掉再打开）即可。
+HMR 会在 DSH 运行期间应用新 bundle。如果 `ruflo_status` 返回 `reloadRequired: true`，说明磁盘上已是新版本、运行进程还是旧代码——重启（或在插件页把 `dsh-ruflo-plugin` 行关掉再打开）即可。
 
 ### 6.7 卸载
 
@@ -511,7 +531,8 @@ npm publish                         # 发布 dsh-ruflo
 仓库结构：
 
 ```text
-lib/host-1.2.3.js          Host 插件（工具、命令、提示词、技能、状态路由）
+bin/dsh-ruflo.js           npm 一条命令安装器（`npx dsh-ruflo@1.2.4 install`）
+lib/host-1.2.4.js          Host 插件（工具、命令、提示词、技能、状态路由）
 lib/native.js              原生工具（agent、workflow、guard、model probe、claims）
 client.js                  Web 状态页（侧栏 + 主面板）
 cordis.patch.yml           bundle patch：MCP 行 + Host 行

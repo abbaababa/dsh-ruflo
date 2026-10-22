@@ -53,5 +53,5 @@
           maxAttempts: 10
 
     - id: dsh-ruflo-plugin
-      name: './lib/host-1.2.3.js'
+      name: './lib/host-1.2.4.js'
       config: {}

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildChildEnv, safeWorkdir, securitySummary } from '../lib/host-1.2.3.js';
+import { buildChildEnv, safeWorkdir, securitySummary } from '../lib/host-1.2.4.js';
 
-const host = readFileSync(new URL('../lib/host-1.2.3.js', import.meta.url), 'utf8');
+const host = readFileSync(new URL('../lib/host-1.2.4.js', import.meta.url), 'utf8');
 const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8');
 
 // 1. 不允许把整个环境塞给子进程
@@ -16,7 +16,7 @@ for (const key of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GIT
 assert.ok(!host.includes('AWS_SECRET_ACCESS_KEY'), 'must not pass AWS secret');
 
 // 3. 版本与 cwd
-assert.ok(host.includes("'1.2.3'"), 'plugin version');
+assert.ok(host.includes("'1.2.4'"), 'plugin version');
 assert.ok(host.includes('ruflo@3.59.7'), 'ruflo version');
 assert.ok(host.includes('ruflo@3.59.7') || patch.includes('ruflo@3.59.7'), 'ruflo version');
 assert.ok(patch.includes('ruflo-mcp-launcher.mjs'), 'patch launcher');
@@ -50,4 +50,14 @@ assert.ok(!shallow.includes('sk-test-SECRET-SHOULD-NOT-LEAK'), 'secret value lea
 assert.ok(summary.secrets.some((s) => s.name === 'ANTHROPIC_API_KEY' && s.configured === true));
 
 if (old === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = old;
+
+// 7. npm 安装器
+const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const bin = readFileSync(new URL('../bin/dsh-ruflo.js', import.meta.url), 'utf8');
+assert.equal(pkg.version, '1.2.4', 'package version');
+assert.equal(pkg.bin?.['dsh-ruflo'], './bin/dsh-ruflo.js', 'bin entry');
+assert.ok(bin.includes("'plugin'"), 'installer uses dsh plugin');
+assert.ok(bin.includes('dsh.profile.bundles'), 'installer selects the bundle');
+assert.ok(!bin.includes('/Users/'), 'installer must not hardcode a local path');
+
 console.log('SECURITY CHECKS PASS');

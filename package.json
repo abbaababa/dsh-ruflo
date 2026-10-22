@@ -1,6 +1,6 @@
 {
   "name": "dsh-ruflo",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "官方 Ruflo（ruvnet/ruflo）多智能体编排接入 DeepSeek Harness：全套 MCP 工具、完整 ruflo CLI、全局技能、状态页与安全扫描，一次安装、所有会话可用。",
   "keywords": [
     "deepseek-harness",
@@ -14,16 +14,20 @@
     "orchestration"
   ],
   "type": "module",
-  "main": "lib/host-1.2.3.js",
+  "main": "lib/host-1.2.4.js",
   "exports": {
-    ".": "./lib/host-1.2.3.js",
-    "./entry": "./lib/host-1.2.3.js",
+    ".": "./lib/host-1.2.4.js",
+    "./entry": "./lib/host-1.2.4.js",
     "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
+  "bin": {
+    "dsh-ruflo": "./bin/dsh-ruflo.js"
+  },
   "files": [
+    "bin",
     "lib",
     "client.js",
     "locale",
@@ -41,6 +45,14 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abbaababa/dsh-ruflo.git"
+  },
+  "homepage": "https://github.com/abbaababa/dsh-ruflo#readme",
+  "bugs": {
+    "url": "https://github.com/abbaababa/dsh-ruflo/issues"
   },
   "license": "MIT",
   "scripts": {

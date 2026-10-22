@@ -14,10 +14,14 @@ English | [简体中文](README.zh-CN.md)
 > [!TIP]
 > **Install in one step**
 >
-> **One command** — paste this into any DSH chat (not a shell):
-> `plugin_manager install_bundle dsh-ruflo@1.2.3`
+> **One command (npm)** — in any terminal:
+> `npx dsh-ruflo@1.2.4 install`
+> Installs into the `web` profile, selects the bundle, and lets DSH load it; add `--profile <name>` for another profile.
 >
-> **One click** — in the DSH Web GUI, open **Plugins** in the sidebar, click **Install a third-party plugin**, enter `dsh-ruflo@1.2.3`, then click **Install**.
+> **Inside DSH** — paste this into any chat:
+> `plugin_manager install_bundle dsh-ruflo@1.2.4`
+>
+> **One click** — in the DSH Web GUI, open **Plugins** in the sidebar, click **Install a third-party plugin**, enter `dsh-ruflo@1.2.4`, then click **Install**.
 
 ---
 
@@ -114,7 +118,7 @@ Connecting Ruflo to a harness by hand normally means:
 │      │             └─ official ruflo 3.59.7  `mcp start`                │
 │      │                                                                  │
 │      └── dsh-ruflo-plugin                                               │
-│            lib/host-1.2.3.js                                            │
+│            lib/host-1.2.4.js                                            │
 │              ├─ CLI runner (argv arrays, timeout, output caps)          │
 │              ├─ native tools (agent / workflow / guard / model / claims)│
 │              └─ GET /dsh-ruflo/status  ──▶  sidebar status page          │
@@ -136,7 +140,7 @@ Two bundle rows, each with one job:
 | Node.js | `v26.9.0` (requires `>=22`) |
 | Official Ruflo | `3.59.7` |
 | OS | macOS (the development machine) |
-| npm package | `dsh-ruflo@1.2.3` |
+| npm package | `dsh-ruflo@1.2.4` |
 
 Linux and Windows are expected to work (the implementation is pure Node.js and uses no platform-specific shell), but they have **not been verified yet**. If you run it there, please open an issue with the output of `ruflo_status`.
 
@@ -149,7 +153,7 @@ The status page requires a **Web** profile. The tools, CLI and slash command wor
 ### 6.1 Prerequisites
 
 - DeepSeek Harness `0.2.1-rc.2` or newer, with the `plugin_manager` tool available.
-- Node.js `>=22`.
+- Node.js `>=22`, and the `dsh` executable on `PATH` for the npm one-command installer.
 - Network access to npm for the first start (the official runtime is downloaded once, then cached).
 - No global `ruflo` installation is required.
 
@@ -157,29 +161,39 @@ The status page requires a **Web** profile. The tools, CLI and slash command wor
 
 The plugin is published on npm as [`dsh-ruflo`](https://www.npmjs.com/package/dsh-ruflo). DSH installs the bundle **from that registry**; you do not need a global Ruflo install, and a bare `npm install -g dsh-ruflo` only downloads files without activating the bundle.
 
-Check the published version and tarball:
+**One npm command** — from any terminal:
 
 ```bash
-npm view dsh-ruflo version
-# 1.2.3
-npm view dsh-ruflo dist.tarball
-# https://registry.npmjs.org/dsh-ruflo/-/dsh-ruflo-1.2.3.tgz
+npx dsh-ruflo@1.2.4 install
 ```
 
-Then install it into DSH. In a DSH session, ask the agent:
+It installs into the default `web` profile, adds `dsh-ruflo` to `dsh.profile.bundles`, and lets DSH load it. Use `--profile <name>` for another profile; `--dry-run` prints the exact steps without changing anything.
 
-> Install the DSH bundle `dsh-ruflo@1.2.3` with `plugin_manager`.
+Why this works: `dsh plugin` installs the package through the profile's package manager, the installer selects the bundle, and a running DSH watches the profile manifest and reconciles it (HMR). If that DSH instance runs without HMR, restart it once.
+
+Inside DSH, the official installer is equivalent. Ask the agent:
+
+> Install the DSH bundle `dsh-ruflo@1.2.4` with `plugin_manager`.
 
 The agent calls:
 
 ```json
 {
   "action": "install_bundle",
-  "target": "dsh-ruflo@1.2.3"
+  "target": "dsh-ruflo@1.2.4"
 }
 ```
 
-Or install from the Web GUI: open **Plugins** in the sidebar, click **Install a third-party plugin**, enter `dsh-ruflo@1.2.3`, and click **Install**. Both paths call the same official installer.
+Or install from the Web GUI: open **Plugins** in the sidebar, click **Install a third-party plugin**, enter `dsh-ruflo@1.2.4`, and click **Install**. All three paths end in the same official installer.
+
+Check the published version and tarball:
+
+```bash
+npm view dsh-ruflo version
+# 1.2.4
+npm view dsh-ruflo dist.tarball
+# https://registry.npmjs.org/dsh-ruflo/-/dsh-ruflo-1.2.4.tgz
+```
 
 Read the result carefully:
 
@@ -192,8 +206,8 @@ Read the result carefully:
 On a machine with npm access:
 
 ```bash
-npm pack dsh-ruflo@1.2.3
-# produces dsh-ruflo-1.2.3.tgz
+npm pack dsh-ruflo@1.2.4
+# produces dsh-ruflo-1.2.4.tgz
 ```
 
 Copy the tarball to the offline machine and install it by absolute path:
@@ -201,7 +215,7 @@ Copy the tarball to the offline machine and install it by absolute path:
 ```json
 {
   "action": "install_bundle",
-  "target": "/absolute/path/to/dsh-ruflo-1.2.3.tgz"
+  "target": "/absolute/path/to/dsh-ruflo-1.2.4.tgz"
 }
 ```
 
@@ -222,14 +236,14 @@ Then install the directory:
 }
 ```
 
-Use a **new version number and a new host filename** for every source change; Node caches modules by file URL, so reusing `lib/host-1.2.3.js` keeps the old code in a running process.
+Use a **new version number and a new host filename** for every source change; Node caches modules by file URL, so reusing `lib/host-1.2.4.js` keeps the old code in a running process.
 
 ### 6.5 First start and verification
 
-1. Restart the DSH web process (stop it, then start it again with your usual command, e.g. `dsh web`).
+1. If DSH was already running with HMR, the bundle is hot-loaded; otherwise restart the DSH web process with your usual command, e.g. `dsh web`.
 2. Open DSH Web. The first MCP start downloads the official runtime; allow **1–3 minutes** on a cold cache.
 3. Check the sidebar item **Ruflo Status**:
-   - plugin version `1.2.3`;
+   - plugin version `1.2.4`;
    - CLI version `ruflo v3.59.7`;
    - MCP connected, tool count greater than zero;
    - tool families listed.
@@ -244,13 +258,19 @@ ruflo_cli {"args": ["--version"]}
 Expected:
 
 ```text
-Ruflo status (plugin dsh-ruflo v1.2.3)
+Ruflo status (plugin dsh-ruflo v1.2.4)
 - CLI: npx -y ruflo@3.59.7
 - Version: ruflo v3.59.7
 - MCP: ruflo connected, N mcp__ruflo__* tools registered
 ```
 
 ### 6.6 Upgrade
+
+```bash
+npx dsh-ruflo@latest install
+```
+
+The same command from npm upgrades the profile. Inside DSH, the equivalent is:
 
 ```json
 {
@@ -259,7 +279,7 @@ Ruflo status (plugin dsh-ruflo v1.2.3)
 }
 ```
 
-Then restart DSH. If `ruflo_status` reports `reloadRequired: true`, the bundle on disk is newer than the code in the running process — restart (or toggle the `dsh-ruflo-plugin` row off and on) to load it.
+HMR applies the new bundle while DSH runs. If `ruflo_status` reports `reloadRequired: true`, the bundle on disk is newer than the code in the running process — restart (or toggle the `dsh-ruflo-plugin` row off and on) to load it.
 
 ### 6.7 Uninstall
 
@@ -509,7 +529,8 @@ npm publish                         # publishes dsh-ruflo
 Repository layout:
 
 ```text
-lib/host-1.2.3.js          Host plugin (tools, command, prompt, skill, status route)
+bin/dsh-ruflo.js           npm one-command installer (`npx dsh-ruflo@1.2.4 install`)
+lib/host-1.2.4.js          Host plugin (tools, command, prompt, skill, status route)
 lib/native.js              Native tools (agent, workflow, guard, model probe, claims)
 client.js                  Web status page (sidebar + main panel)
 cordis.patch.yml           Bundle patch: MCP row + Host row
